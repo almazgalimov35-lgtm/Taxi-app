@@ -24,32 +24,35 @@ jobs:
             git zip unzip openjdk-17-jdk \
             autoconf libtool pkg-config \
             zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-            cmake libffi-dev libssl-dev
+            cmake libffi-dev libssl-dev wget
 
       - name: Install python dependencies
         run: |
           pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Git config
+      - name: Prepare Android SDK and cmdline-tools
         run: |
-          git config --global user.email "build@github.com"
-          git config --global user.name "GitHub Action"
-
-      - name: Pre-accept Android licenses
-        run: |
-          mkdir -p $HOME/.android
-          cat > $HOME/.android/repositories.cfg <<EOF
-          ### User Sources for Android SDK Manager
-          count=0
-          EOF
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
-          echo "d975f751698a77b662f1254ddbeed3901e976f5a" > $HOME/.buildozer/android/platform/android-sdk/licenses/intel-android-extra-license
+          SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $SDK_DIR
+          cd $SDK_DIR
+          # Скачиваем cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+          mkdir -p cmdline-tools
+          unzip -q tools.zip -d cmdline-tools
+          mv cmdline-tools/cmdline-tools cmdline-tools/latest 2>/dev/null || true
+          # Buildozer ищет sdkmanager в tools/bin — создаём ссылку
+          mkdir -p tools/bin
+          cp cmdline-tools/latest/bin/sdkmanager tools/bin/sdkmanager
+          cp cmdline-tools/latest/bin/avdmanager tools/bin/avdmanager
+          chmod +x tools/bin/sdkmanager tools/bin/avdmanager
+          # Принимаем лицензии
+          mkdir -p licenses
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > licenses/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> licenses/android-sdk-license
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > licenses/android-sdk-preview-license
+          echo "d975f751698a77b662f1254ddbeed3901e976f5a" > licenses/intel-android-extra-license
 
       - name: Build APK
         run: |
