@@ -22,6 +22,9 @@ jobs:
             autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev
           pip install --user buildozer cython
+          mkdir -p $HOME/.android
+          touch $HOME/.android/repositories.cfg
+          yes | $HOME/.local/bin/buildozer android update
 
       - name: Build with Buildozer
         run: |
@@ -33,4 +36,3 @@ jobs:
         with:
           name: taxi-apk
           path: bin/*.apk
-        
