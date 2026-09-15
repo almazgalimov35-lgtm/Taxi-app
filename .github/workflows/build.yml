@@ -13,7 +13,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -22,12 +22,13 @@ jobs:
             autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev
           pip install --user buildozer cython
-
-      - name: Accept Android licenses
-        run: |
           mkdir -p $HOME/.android
           touch $HOME/.android/repositories.cfg
-          yes | $HOME/.local/bin/buildozer android debug 2>/dev/null || true
+
+      - name: Force clean old NDK
+        run: |
+          rm -rf $HOME/.buildozer/android/platform/android-ndk-r28c || true
+          rm -rf .buildozer || true
 
       - name: Build with Buildozer
         run: |
