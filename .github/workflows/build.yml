@@ -31,10 +31,28 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
+      - name: Git config
+        run: |
+          git config --global user.email "build@github.com"
+          git config --global user.name "GitHub Action"
+          git config --global http.postBuffer 524288000
+
+      - name: Pre-accept Android licenses
+        run: |
+          mkdir -p $HOME/.android
+          touch $HOME/.android/repositories.cfg
+
       - name: Build APK
         run: |
-          yes | buildozer android debug
+          buildozer android debug
+        timeout-minutes: 90
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: taxi-apk
+          path: bin/*.apk
+          if-no-files-found: warn
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
