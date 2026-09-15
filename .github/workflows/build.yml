@@ -7,34 +7,40 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip \
-            autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
-            libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev
-          pip install --user buildozer cython
-          mkdir -p $HOME/.android
-          touch $HOME/.android/repositories.cfg
+          sudo apt install -y \
+            git zip unzip openjdk-17-jdk \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
+            cmake libffi-dev libssl-dev
 
-      - name: Force clean old NDK
+      - name: Install python dependencies
         run: |
-          rm -rf $HOME/.buildozer/android/platform/android-ndk-r28c || true
-          rm -rf .buildozer || true
+          pip install --upgrade pip
+          pip install buildozer cython
 
-      - name: Build with Buildozer
+      - name: Build APK
         run: |
-          export PATH=$PATH:$HOME/.local/bin
-          buildozer -v android debug
+          yes | buildozer android debug
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: taxi-apk
+          path: bin/*.apk
+          if-no-files-found: warn
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
