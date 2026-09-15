@@ -41,17 +41,29 @@ jobs:
         run: |
           mkdir -p $HOME/.android
           touch $HOME/.android/repositories.cfg
-          # Первая попытка - принимает лицензии через yes
-          timeout 600 bash -c "yes | buildozer android update" || true
+          timeout 900 bash -c "yes | buildozer android update" || true
+
+      - name: Clean old build
+        run: |
+          rm -rf .buildozer/android/platform/build-arm64-v8a
+          rm -rf bin/
 
       - name: Build APK
         run: |
-          yes | buildozer android debug 2>&1 | tail -100
+          buildozer -v android debug 2>&1 | tee build.log | tail -30
         timeout-minutes: 90
+
+      - name: Show build log
+        if: always()
+        run: |
+          echo "=== LAST 100 LINES ==="
+          tail -100 build.log || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: taxi-apk
-          path: bin/*.apk
+          path: |
+            bin/*.apk
+            **/*.apk
           if-no-files-found: warn
