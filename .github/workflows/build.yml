@@ -8,60 +8,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Build with Buildozer
+        uses: ArtemSBazhenov/buildozer-action@v1
         with:
-          python-version: '3.10'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            git zip unzip openjdk-17-jdk \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-            cmake libffi-dev libssl-dev wget
-
-      - name: Install python dependencies
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython
-
-      - name: Prepare Android SDK cmdline-tools
-        run: |
-          SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
-          mkdir -p $SDK_DIR
-          cd $SDK_DIR
-          # Скачиваем свежий пакет
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
-          unzip -q tools.zip
-          # Папка распакуется как cmdline-tools/
-          mkdir -p cmdline-tools/latest
-          # Переносим содержимое
-          mv cmdline-tools/bin cmdline-tools/latest/ 2>/dev/null || true
-          mv cmdline-tools/lib cmdline-tools/latest/ 2>/dev/null || true
-          mv cmdline-tools/NOTICE.txt cmdline-tools/latest/ 2>/dev/null || true
-          mv cmdline-tools/source.properties cmdline-tools/latest/ 2>/dev/null || true
-          # Создаём симлинк tools -> cmdline-tools/latest, чтобы Buildozer нашёл sdkmanager
-          ln -s cmdline-tools/latest tools
-          # Принимаем лицензии
-          mkdir -p licenses
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > licenses/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> licenses/android-sdk-license
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> licenses/android-sdk-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > licenses/android-sdk-preview-license
-          echo "d975f751698a77b662f1254ddbeed3901e976f5a" > licenses/intel-android-extra-license
-          # Проверяем, что sdkmanager работает
-          tools/bin/sdkmanager --version || echo "sdkmanager still broken"
-
-      - name: Build APK
-        run: |
-          buildozer android debug
-        timeout-minutes: 90
+          command: android debug
+          buildozer_version: stable
+          workdir: .
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
