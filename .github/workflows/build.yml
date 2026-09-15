@@ -33,3 +33,4 @@ jobs:
         with:
           name: taxi-apk
           path: bin/*.apk
+        
