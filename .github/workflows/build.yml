@@ -28,13 +28,27 @@ jobs:
           pip install --upgrade pip
           pip install buildozer
 
+      - name: Clean buildozer cache
+        run: |
+          buildozer android clean || true
+          rm -rf .buildozer || true
+
       - name: Build APK
         run: |
           buildozer -v android debug
 
+      - name: Find APK anywhere
+        if: always()
+        run: |
+          echo "=== Searching for APK files ==="
+          find $GITHUB_WORKSPACE -name "*.apk" -type f || echo "No APK found"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: taxi-apk
-          path: bin/*.apk
+          path: |
+            bin/*.apk
+            **/*.apk
           if-no-files-found: warn
