@@ -14,4 +14,4 @@ android.archs = arm64-v8a
 android.api = 30
 android.minapi = 21
 android.ndk = 25b
-p4a.branch = v2023.01.01
+p4a.branch = develop
