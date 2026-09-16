@@ -15,4 +15,4 @@ android.api = 27
 android.minapi = 21
 android.ndk = 25b
 p4a.branch = master
-android.gradle_dependencies = com.android.tools.build:gradle:4.2.2
+android.gradle_dependencies = com.android.tools.build:gradle:3.5.4
