@@ -38,6 +38,8 @@ jobs:
           pip install buildozer cython
 
       - name: Pre-download Android SDK and accept licenses
+        env:
+          ANDROID_NDK_VERSION: "25b"
         run: |
           mkdir -p $HOME/.android
           touch $HOME/.android/repositories.cfg
@@ -46,9 +48,13 @@ jobs:
       - name: Clean old build
         run: |
           rm -rf .buildozer/android/platform/build-arm64-v8a
+          rm -rf .buildozer/android/platform/android-ndk-r28c
           rm -rf bin/
 
       - name: Build APK
+        env:
+          ANDROID_NDK_VERSION: "25b"
+          ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: |
           buildozer -v android debug 2>&1 | tee build.log | tail -30
         timeout-minutes: 90
@@ -56,8 +62,8 @@ jobs:
       - name: Show build log
         if: always()
         run: |
-          echo "=== LAST 100 LINES ==="
-          tail -100 build.log || true
+          echo "=== ERRORS ==="
+          grep -n -i -E "error|fail|fatal" build.log | tail -50 || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
