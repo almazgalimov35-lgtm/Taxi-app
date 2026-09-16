@@ -37,6 +37,22 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
+      - name: Free disk and memory
+        run: |
+          echo "=== BEFORE ==="
+          free -h
+          df -h /
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/27.3.13750724
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/29.0.14206865
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          echo "=== AFTER ==="
+          free -h
+          df -h /
+
       - name: Pre-download Android SDK and accept licenses
         env:
           ANDROID_NDK_VERSION: "25b"
@@ -57,23 +73,25 @@ jobs:
           ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: |
           buildozer -v android debug 2>&1 | tee build.log
-        timeout-minutes: 90
+        timeout-minutes: 120
         continue-on-error: true
 
-      - name: Show first 100 lines
+      - name: Show build log middle
         if: always()
         run: |
-          echo "=== FIRST 100 LINES ==="
-          head -100 build.log || true
+          echo "=== LINES 100-250 ==="
+          sed -n '100,250p' build.log || true
           echo ""
-          echo "=== LAST 100 LINES ==="
-          tail -100 build.log || true
+          echo "=== GREP ERRORS ==="
+          grep -n -i -E "error|fail|fatal|exception|traceback|killed|memory" build.log | head -50 || true
 
       - name: Debug - find all APK
         if: always()
         run: |
           echo "=== ALL APK ==="
           find . -name "*.apk" -type f 2>/dev/null
+          echo "=== MEMORY ==="
+          free -h
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -82,13 +100,4 @@ jobs:
           path: |
             bin/*.apk
             **/*.apk
-          if-no-files-found: warn
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: taxi-apk
-          path: |
-            bin/*.apk
-            **/*.apk
-            .buildozer/**/*.apk
           if-no-files-found: warn
