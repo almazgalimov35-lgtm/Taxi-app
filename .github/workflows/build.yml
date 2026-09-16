@@ -55,6 +55,8 @@ jobs:
         env:
           ANDROID_NDK_VERSION: "25b"
           ANDROID_ACCEPT_SDK_LICENSE: "1"
+          ANDROID_API: "28"
+          ANDROID_MINAPI: "21"
         run: |
           buildozer -v android debug 2>&1 | tee build.log | tail -30
         timeout-minutes: 90
