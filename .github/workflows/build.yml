@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Kivy APK
 
 on:
   push:
@@ -7,97 +7,34 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
-      - name: Set up Java 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '11'
+          python-version: '3.11'
 
       - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt install -y \
-            git zip unzip \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-            cmake libffi-dev libssl-dev wget
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev autopoint
 
-      - name: Install python dependencies
+      - name: Install Buildozer
         run: |
           pip install --upgrade pip
-          pip install buildozer cython
-
-      - name: Free disk and memory
-        run: |
-          echo "=== BEFORE ==="
-          free -h
-          df -h /
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android/sdk/ndk/27.3.13750724
-          sudo rm -rf /usr/local/lib/android/sdk/ndk/29.0.14206865
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          echo "=== AFTER ==="
-          free -h
-          df -h /
-
-      - name: Pre-download Android SDK and accept licenses
-        env:
-          ANDROID_NDK_VERSION: "25b"
-        run: |
-          mkdir -p $HOME/.android
-          touch $HOME/.android/repositories.cfg
-          timeout 900 bash -c "yes | buildozer android update" || true
-
-      - name: Clean old build
-        run: |
-          rm -rf .buildozer/android/platform/build-arm64-v8a
-          rm -rf .buildozer/android/platform/android-ndk-r28c
-          rm -rf bin/
+          pip install buildozer
 
       - name: Build APK
-        env:
-          ANDROID_NDK_VERSION: "25b"
-          ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: |
-          buildozer -v android debug 2>&1 | tee build.log
-        timeout-minutes: 120
-        continue-on-error: true
-
-      - name: Show build log middle
-        if: always()
-        run: |
-          echo "=== LINES 100-250 ==="
-          sed -n '100,250p' build.log || true
-          echo ""
-          echo "=== GREP ERRORS ==="
-          grep -n -i -E "error|fail|fatal|exception|traceback|killed|memory" build.log | head -50 || true
-
-      - name: Debug - find all APK
-        if: always()
-        run: |
-          echo "=== ALL APK ==="
-          find . -name "*.apk" -type f 2>/dev/null
-          echo "=== MEMORY ==="
-          free -h
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: taxi-apk
-          path: |
-            bin/*.apk
-            **/*.apk
+          path: bin/*.apk
           if-no-files-found: warn
