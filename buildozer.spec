@@ -1,5 +1,5 @@
 [app]
-title = Учёт таксиста
+title = Taxi
 package.name = taxiapp
 package.domain = org.taxi
 source.dir = .
@@ -13,7 +13,5 @@ android.accept_sdk_license = True
 android.archs = arm64-v8a
 android.api = 28
 android.minapi = 21
-android.ndk = 25b
-android.gradle_dependencies = 
 p4a.branch = master
 p4a.bootstrap = sdl2
