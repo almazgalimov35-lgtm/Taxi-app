@@ -55,7 +55,7 @@ jobs:
         env:
           ANDROID_NDK_VERSION: "25b"
           ANDROID_ACCEPT_SDK_LICENSE: "1"
-          ANDROID_API: "28"
+          ANDROID_API: "27"
           ANDROID_MINAPI: "21"
         run: |
           buildozer -v android debug 2>&1 | tee build.log | tail -30
@@ -66,6 +66,27 @@ jobs:
         run: |
           echo "=== ERRORS ==="
           grep -n -i -E "error|fail|fatal" build.log | tail -50 || true
+          echo ""
+          echo "=== LAST 50 LINES ==="
+          tail -50 build.log || true
+
+      - name: Debug - find all APK
+        if: always()
+        run: |
+          echo "=== ROOT ==="
+          ls -la
+          echo ""
+          echo "=== bin folder ==="
+          ls -la bin/ 2>/dev/null || echo "NO bin folder"
+          echo ""
+          echo "=== ALL APK ON DISK ==="
+          find / -name "*.apk" -type f 2>/dev/null | head -30
+          echo ""
+          echo "=== dists folder ==="
+          find .buildozer -type d -name "dists" 2>/dev/null
+          echo ""
+          echo "=== outputs apk folder ==="
+          find .buildozer -type d -name "apk" 2>/dev/null
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -74,4 +95,5 @@ jobs:
           path: |
             bin/*.apk
             **/*.apk
+            .buildozer/**/*.apk
           if-no-files-found: warn
