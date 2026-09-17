@@ -37,33 +37,33 @@ jobs:
         id: build
         continue-on-error: true
         run: |
-          set -o pipefail
-          buildozer -v android debug > build.log 2>&1
-          echo "Buildozer exit code: $?"
+          buildozer -v android debug > build.log 2>&1 || true
 
-      - name: Show full log tail
+      - name: Find all log files in .buildozer
         if: always()
         run: |
-          echo "=== TOTAL LINES IN LOG ==="
+          echo "=== ALL .log FILES INSIDE .buildozer ==="
+          find .buildozer -name "*.log" -type f 2>/dev/null || echo "No .buildozer folder"
+
+      - name: Show last 100 lines of each internal log
+        if: always()
+        run: |
+          echo "=== INTERNAL P4A LOGS ==="
+          find .buildozer -name "*.log" -type f 2>/dev/null | while read f; do
+            echo ""
+            echo "########## FILE: $f ##########"
+            tail -n 100 "$f"
+            echo ""
+          done
+
+      - name: Show full build.log tail
+        if: always()
+        run: |
+          echo "=== TOTAL LINES ==="
           wc -l build.log
           echo ""
-          echo "=== LAST 150 LINES (unbuffered) ==="
-          tail -n 150 build.log
-
-      - name: Show lines around failure
-        if: always()
-        run: |
-          echo "=== LINES AROUND '# Command failed:' (30 before, 5 after) ==="
-          LINE=$(grep -n "# Command failed:" build.log | head -1 | cut -d: -f1 || echo "")
-          if [ -n "$LINE" ]; then
-            START=$((LINE - 30))
-            END=$((LINE + 5))
-            if [ $START -lt 1 ]; then START=1; fi
-            sed -n "${START},${END}p" build.log
-          else
-            echo "Marker not found, showing last 100 lines"
-            tail -n 100 build.log
-          fi
+          echo "=== FIRST 100 LINES OF build.log ==="
+          head -n 100 build.log
 
       - name: Find APK anywhere
         if: always()
@@ -71,12 +71,14 @@ jobs:
           echo "=== Searching for APK files ==="
           find $GITHUB_WORKSPACE -name "*.apk" -type f || echo "No APK found"
 
-      - name: Upload build log
+      - name: Upload all logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build.log
+          name: all-logs
+          path: |
+            build.log
+            .buildozer/**/*.log
           if-no-files-found: warn
 
       - name: Upload APK
