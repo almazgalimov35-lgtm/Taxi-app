@@ -39,23 +39,20 @@ jobs:
         run: |
           buildozer -v android debug 2>&1 | tee build.log
 
-      - name: Show last 100 lines of build log
+      - name: Show lines before failure
         if: always()
         run: |
-          echo "=== LAST 100 LINES OF BUILD LOG ==="
-          tail -n 100 build.log || echo "No log found"
-
-      - name: Show all error lines from build log
-        if: always()
-        run: |
-          echo "=== ALL LINES WITH 'error' (case-insensitive) ==="
-          grep -i "error" build.log || echo "No error lines found"
-          echo ""
-          echo "=== ALL LINES WITH 'ffi' ==="
-          grep -i "ffi" build.log || echo "No ffi lines found"
-          echo ""
-          echo "=== ALL LINES WITH 'No such file' ==="
-          grep -i "no such file" build.log || echo "No 'no such file' lines found"
+          echo "=== 60 LINES BEFORE '# Command failed:' ==="
+          LINE=$(grep -n "# Command failed:" build.log | head -1 | cut -d: -f1 || echo "")
+          if [ -n "$LINE" ]; then
+            START=$((LINE - 60))
+            if [ $START -lt 1 ]; then START=1; fi
+            sed -n "${START},${LINE}p" build.log
+          else
+            echo "Marker '# Command failed:' not found"
+            echo "=== LAST 80 LINES INSTEAD ==="
+            tail -n 80 build.log
+          fi
 
       - name: Find APK anywhere
         if: always()
