@@ -37,21 +37,32 @@ jobs:
         id: build
         continue-on-error: true
         run: |
-          buildozer -v android debug 2>&1 | tee build.log
+          set -o pipefail
+          buildozer -v android debug > build.log 2>&1
+          echo "Buildozer exit code: $?"
 
-      - name: Show lines before failure
+      - name: Show full log tail
         if: always()
         run: |
-          echo "=== 60 LINES BEFORE '# Command failed:' ==="
+          echo "=== TOTAL LINES IN LOG ==="
+          wc -l build.log
+          echo ""
+          echo "=== LAST 150 LINES (unbuffered) ==="
+          tail -n 150 build.log
+
+      - name: Show lines around failure
+        if: always()
+        run: |
+          echo "=== LINES AROUND '# Command failed:' (30 before, 5 after) ==="
           LINE=$(grep -n "# Command failed:" build.log | head -1 | cut -d: -f1 || echo "")
           if [ -n "$LINE" ]; then
-            START=$((LINE - 60))
+            START=$((LINE - 30))
+            END=$((LINE + 5))
             if [ $START -lt 1 ]; then START=1; fi
-            sed -n "${START},${LINE}p" build.log
+            sed -n "${START},${END}p" build.log
           else
-            echo "Marker '# Command failed:' not found"
-            echo "=== LAST 80 LINES INSTEAD ==="
-            tail -n 80 build.log
+            echo "Marker not found, showing last 100 lines"
+            tail -n 100 build.log
           fi
 
       - name: Find APK anywhere
