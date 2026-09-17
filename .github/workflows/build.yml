@@ -34,14 +34,42 @@ jobs:
           rm -rf .buildozer || true
 
       - name: Build APK
+        id: build
+        continue-on-error: true
         run: |
-          buildozer -v android debug
+          buildozer -v android debug 2>&1 | tee build.log
+
+      - name: Show last 100 lines of build log
+        if: always()
+        run: |
+          echo "=== LAST 100 LINES OF BUILD LOG ==="
+          tail -n 100 build.log || echo "No log found"
+
+      - name: Show all error lines from build log
+        if: always()
+        run: |
+          echo "=== ALL LINES WITH 'error' (case-insensitive) ==="
+          grep -i "error" build.log || echo "No error lines found"
+          echo ""
+          echo "=== ALL LINES WITH 'ffi' ==="
+          grep -i "ffi" build.log || echo "No ffi lines found"
+          echo ""
+          echo "=== ALL LINES WITH 'No such file' ==="
+          grep -i "no such file" build.log || echo "No 'no such file' lines found"
 
       - name: Find APK anywhere
         if: always()
         run: |
           echo "=== Searching for APK files ==="
           find $GITHUB_WORKSPACE -name "*.apk" -type f || echo "No APK found"
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: warn
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
