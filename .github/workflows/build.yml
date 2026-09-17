@@ -36,6 +36,16 @@ jobs:
           echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
           echo "y" | sdkmanager --licenses || true
 
+      - name: Pre-download pyjnius and other packages
+        run: |
+          mkdir -p $HOME/.buildozer/android/packages
+          cd $HOME/.buildozer/android/packages
+          echo "=== Downloading pyjnius ==="
+          wget -q --tries=5 --timeout=120 -O pyjnius-1.7.0.zip https://github.com/kivy/pyjnius/archive/1.7.0.zip || \
+            curl -L --retry 5 --retry-delay 10 --max-time 300 -o pyjnius-1.7.0.zip https://github.com/kivy/pyjnius/archive/1.7.0.zip
+          ls -la
+          echo "=== pyjnius downloaded ==="
+
       - name: Clean buildozer cache
         run: |
           buildozer android clean || true
@@ -54,7 +64,7 @@ jobs:
           wc -l build.log
           echo ""
           echo "=== LINES WITH 'ERROR', 'FAILED', 'TRACEBACK', 'CONFIGURE:' (skipping license) ==="
-          grep -n -i -E "(^error|ERROR:|FAILED|Traceback|configure: error|fatal error|No such file|libffi|SDL|kivy)" build.log | grep -v -i "License" | head -50 || echo "No matching lines"
+          grep -n -i -E "(^error|ERROR:|FAILED|Traceback|configure: error|fatal error|No such file|libffi|SDL|kivy|pyjnius|Downloading)" build.log | grep -v -i "License" | tail -80 || echo "No matching lines"
           echo ""
           echo "=== LAST 100 LINES (real end of build) ==="
           tail -n 100 build.log
