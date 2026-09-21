@@ -6,7 +6,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 icon.filename = %(source.dir)s/icon.png
 version = 1.0
-requirements = python3,kivy==2.3.0
+requirements = python3==3.13.9,hostpython3==3.13.9,kivy==2.3.0,openssl,sqlite3,pyjnius,android,setuptools
 orientation = portrait
 fullscreen = 0
 android.permissions = INTERNET
